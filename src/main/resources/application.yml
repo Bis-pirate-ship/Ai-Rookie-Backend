@@ -2,6 +2,9 @@ spring:
   application:
     name: Backend
 
+  profiles:
+    default: ${SPRING_PROFILES_ACTIVE:local}
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -17,6 +20,17 @@ spring:
         format_sql: false
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-validity-seconds: 1800
+  refresh-token-validity-seconds: 604800
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
 
 server:
   port: 8080
