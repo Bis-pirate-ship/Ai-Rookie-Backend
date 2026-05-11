@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/routes/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(
