@@ -1,6 +1,6 @@
 package airookie.backend.routes.google;
 
-import airookie.backend.routes.domain.RouteCandidate;
+import airookie.backend.routes.domain.ParsedRoute;
 import airookie.backend.routes.domain.RouteStep;
 import airookie.backend.routes.domain.TravelMode;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,8 +15,8 @@ public class GoogleDirectionsMapper {
 
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
 
-    public List<RouteCandidate> toCandidates(JsonNode root) {
-        List<RouteCandidate> candidates = new ArrayList<>();
+    public List<ParsedRoute> toParsedRoutes(JsonNode root) {
+        List<ParsedRoute> parsedRoutes = new ArrayList<>();
         JsonNode routes = root.path("routes");
 
         for (int routeIndex = 0; routeIndex < routes.size(); routeIndex++) {
@@ -25,9 +25,6 @@ public class GoogleDirectionsMapper {
             JsonNode stepsNode = leg.path("steps");
 
             List<RouteStep> steps = new ArrayList<>();
-            int walkDistanceMeters = 0;
-            int transitStepCount = 0;
-            boolean hasElevator = false;
 
             for (int stepIndex = 0; stepIndex < stepsNode.size(); stepIndex++) {
                 JsonNode step = stepsNode.get(stepIndex);
@@ -35,16 +32,6 @@ public class GoogleDirectionsMapper {
                 int distanceMeters = step.path("distance").path("value").asInt(0);
                 int durationMinutes = toMinutes(step.path("duration").path("value").asInt(0));
                 String instruction = buildInstruction(step, mode);
-
-                if (mode == TravelMode.WALKING) {
-                    walkDistanceMeters += distanceMeters;
-                }
-                if (isTransitMode(mode)) {
-                    transitStepCount++;
-                }
-                if (containsElevator(instruction)) {
-                    hasElevator = true;
-                }
 
                 steps.add(new RouteStep(
                         stepIndex + 1,
@@ -55,21 +42,16 @@ public class GoogleDirectionsMapper {
                 ));
             }
 
-            candidates.add(new RouteCandidate(
+            parsedRoutes.add(new ParsedRoute(
                     "google-route-" + (routeIndex + 1),
                     route.path("summary").asText("Google Maps 대중교통 경로"),
                     toMinutes(leg.path("duration").path("value").asInt(0)),
                     leg.path("distance").path("value").asInt(0),
-                    walkDistanceMeters,
-                    Math.max(0, transitStepCount - 1),
-                    hasElevator,
-                    0.0,
-                    "unknown",
                     steps
             ));
         }
 
-        return candidates;
+        return parsedRoutes;
     }
 
     private TravelMode resolveMode(JsonNode step) {
@@ -119,11 +101,6 @@ public class GoogleDirectionsMapper {
                 .replace("&nbsp;", " ")
                 .replace("&amp;", "&")
                 .trim();
-    }
-
-    private boolean containsElevator(String instruction) {
-        String normalized = instruction.toLowerCase();
-        return normalized.contains("엘리베이터") || normalized.contains("elevator");
     }
 
     private int toMinutes(int seconds) {
