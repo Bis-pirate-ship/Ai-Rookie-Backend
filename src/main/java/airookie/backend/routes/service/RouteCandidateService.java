@@ -54,11 +54,13 @@ public class RouteCandidateService {
     }
 
     public RouteCandidatesResponse getCandidates(RecommendRouteRequest request) {
+        return toCandidatesResponse(getCandidateFeatures(request));
+    }
+
+    public List<RouteCandidate> getCandidateFeatures(RecommendRouteRequest request) {
         JsonNode googleResponse = googleDirectionsClient.fetchTransitRoutes(request);
         List<ParsedRoute> parsedRoutes = googleDirectionsMapper.toParsedRoutes(googleResponse);
-        List<RouteCandidate> candidates = routeFeatureExtractor.extract(parsedRoutes);
-
-        return toCandidatesResponse(candidates);
+        return routeFeatureExtractor.extract(parsedRoutes);
     }
 
     private RouteCandidatesResponse toCandidatesResponse(List<RouteCandidate> candidates) {
@@ -104,6 +106,11 @@ public class RouteCandidateService {
         return new RouteStep(
                 step.order(),
                 step.mode(),
+                step.lineName(),
+                step.vehicleType(),
+                step.departureStopName(),
+                step.arrivalStopName(),
+                step.departureTimeEpochSeconds(),
                 step.instruction(),
                 step.durationMinutes(),
                 step.distanceMeters()
@@ -119,6 +126,7 @@ public class RouteCandidateService {
                 candidate.transferCount(),
                 candidate.hasElevator(),
                 candidate.congestionLevel(),
+                candidate.timeSlot(),
                 candidate.steps().stream()
                         .map(this::toStepResponse)
                         .toList()
@@ -129,6 +137,11 @@ public class RouteCandidateService {
         return new RouteStepResponse(
                 step.order(),
                 step.mode(),
+                step.lineName(),
+                step.vehicleType(),
+                step.departureStopName(),
+                step.arrivalStopName(),
+                step.departureTimeEpochSeconds(),
                 step.instruction(),
                 step.durationMinutes(),
                 step.distanceMeters()

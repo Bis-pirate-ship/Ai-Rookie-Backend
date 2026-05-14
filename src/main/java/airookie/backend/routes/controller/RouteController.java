@@ -4,7 +4,9 @@ import airookie.backend.routes.dto.GoogleRoutesResponse;
 import airookie.backend.routes.dto.RecommendRouteRequest;
 import airookie.backend.routes.dto.RouteCandidatesResponse;
 import airookie.backend.routes.dto.RouteFeaturesRequest;
+import airookie.backend.routes.dto.RouteRecommendationResponse;
 import airookie.backend.routes.service.RouteCandidateService;
+import airookie.backend.routes.service.RouteRecommendationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RouteController {
 
     private final RouteCandidateService routeCandidateService;
+    private final RouteRecommendationService routeRecommendationService;
 
     @PostMapping("/google")
     public ResponseEntity<GoogleRoutesResponse> getGoogleRoutes(@Valid @RequestBody RecommendRouteRequest request) {
@@ -33,5 +36,10 @@ public class RouteController {
     @PostMapping("/candidates")
     public ResponseEntity<RouteCandidatesResponse> getCandidates(@Valid @RequestBody RecommendRouteRequest request) {
         return ResponseEntity.ok(routeCandidateService.getCandidates(request));
+    }
+
+    @PostMapping("/recommend")
+    public ResponseEntity<RouteRecommendationResponse> recommend(@Valid @RequestBody RecommendRouteRequest request) {
+        return ResponseEntity.ok(routeRecommendationService.recommend(request));
     }
 }

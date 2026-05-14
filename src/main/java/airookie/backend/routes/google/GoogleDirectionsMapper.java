@@ -31,11 +31,17 @@ public class GoogleDirectionsMapper {
                 TravelMode mode = resolveMode(step);
                 int distanceMeters = step.path("distance").path("value").asInt(0);
                 int durationMinutes = toMinutes(step.path("duration").path("value").asInt(0));
+                JsonNode transitDetails = step.path("transit_details");
                 String instruction = buildInstruction(step, mode);
 
                 steps.add(new RouteStep(
                         stepIndex + 1,
                         mode,
+                        transitLineName(transitDetails),
+                        transitVehicleType(transitDetails),
+                        transitDetails.path("departure_stop").path("name").asText(null),
+                        transitDetails.path("arrival_stop").path("name").asText(null),
+                        transitDepartureTime(transitDetails),
                         instruction,
                         durationMinutes,
                         distanceMeters
@@ -74,6 +80,38 @@ public class GoogleDirectionsMapper {
             case "SUBWAY", "HEAVY_RAIL", "COMMUTER_TRAIN", "RAIL" -> TravelMode.SUBWAY;
             default -> TravelMode.TRANSIT;
         };
+    }
+
+    private String transitLineName(JsonNode transitDetails) {
+        if (transitDetails.isMissingNode()) {
+            return null;
+        }
+
+        String shortName = transitDetails.path("line").path("short_name").asText(null);
+        if (shortName != null && !shortName.isBlank()) {
+            return shortName;
+        }
+
+        String name = transitDetails.path("line").path("name").asText(null);
+        return name == null || name.isBlank() ? null : name;
+    }
+
+    private String transitVehicleType(JsonNode transitDetails) {
+        if (transitDetails.isMissingNode()) {
+            return null;
+        }
+
+        String vehicleType = transitDetails.path("line").path("vehicle").path("type").asText(null);
+        return vehicleType == null || vehicleType.isBlank() ? null : vehicleType;
+    }
+
+    private Long transitDepartureTime(JsonNode transitDetails) {
+        JsonNode value = transitDetails.path("departure_time").path("value");
+        if (!value.isNumber()) {
+            return null;
+        }
+
+        return value.asLong();
     }
 
     private boolean isTransitMode(TravelMode mode) {
